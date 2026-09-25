@@ -115,6 +115,47 @@ def test_manual_block_stops_followup(db, monkeypatch):
     assert schedule_followups(db) == 0
 
 
+def test_low_score_lead_not_sent(db, monkeypatch):
+    from app.services.mailer import can_send
+
+    campaign = Campaign(name='Lage score', industries=['restaurant'], region='Zuid-Holland', daily_limit=25, min_score=70, max_followups=1, active=True)
+    company = Company(company_name='Laag', name_key='laag:rotterdam', domain='laag.nl', website='https://laag.nl', industry='restaurant', city='Rotterdam', region='Zuid-Holland', analyzed_at=now())
+    db.add_all([campaign, company])
+    db.flush()
+    contact = Contact(company_id=company.id, email='info@laag.nl', email_source_url='https://laag.nl/contact', contact_type='general', confidence_score=90, verification_status='publicly_listed')
+    db.add(contact)
+    db.flush()
+    lead = CampaignLead(campaign_id=campaign.id, company_id=company.id, contact_id=contact.id, score=40, service='vloerreiniging', state='qualified')
+    db.add(lead)
+    db.flush()
+    mail = Email(campaign_lead_id=lead.id, contact_id=contact.id, sequence=0, subject='X', body='Y')
+    db.add(mail)
+    db.commit()
+    monkeypatch.setattr('app.services.mailer.settings', lambda: make_settings(dry_run=True, min_lead_score=65))
+    allowed, reason = can_send(db, mail, lead, campaign, company, contact)
+    assert (allowed, reason) == (False, 'low_score')
+
+
+def test_unverified_contact_not_sent(db, monkeypatch):
+    from app.services.mailer import can_send
+
+    campaign = Campaign(name='Ongeverifieerd', industries=['restaurant'], region='Zuid-Holland', daily_limit=25, min_score=65, max_followups=1, active=True)
+    company = Company(company_name='Twijfel', name_key='twijfel:rotterdam', domain='twijfel.nl', website='https://twijfel.nl', industry='restaurant', city='Rotterdam', region='Zuid-Holland', analyzed_at=now())
+    db.add_all([campaign, company])
+    db.flush()
+    contact = Contact(company_id=company.id, email='info@twijfel.nl', email_source_url='https://twijfel.nl/contact', contact_type='general', confidence_score=40, verification_status='publicly_listed')
+    db.add(contact)
+    db.flush()
+    lead = CampaignLead(campaign_id=campaign.id, company_id=company.id, contact_id=contact.id, score=80, service='vloerreiniging', state='qualified')
+    db.add(lead)
+    db.flush()
+    mail = Email(campaign_lead_id=lead.id, contact_id=contact.id, sequence=0, subject='X', body='Y')
+    db.add(mail)
+    db.commit()
+    monkeypatch.setattr('app.services.mailer.settings', lambda: make_settings(dry_run=True))
+    assert can_send(db, mail, lead, campaign, company, contact) == (False, 'unverified_contact')
+
+
 def test_no_hardcoded_credentials_logged(db):
     # Ensures we keep credentials out of audit detail.
     from app.services.mailer import _deliver

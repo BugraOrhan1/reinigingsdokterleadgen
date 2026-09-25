@@ -56,6 +56,20 @@ DEFAULT_OVERPAST = 'https://overpass-api.de/api/interpreter'
 NOMINATIM_SEARCH = 'https://nominatim.openstreetmap.org/search'
 
 
+def _normalize_website(value: str) -> str:
+    """OSM publishes websites with or without a scheme; make them well-formed."""
+    website = (value or '').strip().lower()
+    if not website:
+        return ''
+    if '://' not in website:
+        website = 'https://' + website.lstrip('/')
+    host = urlsplit(website).hostname or ''
+    # Reject malformed hostnames early (spaces, strange characters) before DNS.
+    if not host or not re.fullmatch(r'[a-z0-9.-]+', host) or '..' in host:
+        return ''
+    return website if public_url(website) else ''
+
+
 class DiscoveryError(RuntimeError):
     """Raised when a public data source refuses the request or misbehaves."""
 
@@ -182,8 +196,8 @@ def discover(industry: str, region: str = '', city: str = '', radius_km: int = 0
     for item in payload.get('elements', []):
         tags = item.get('tags') or {}
         name = (tags.get('name') or '').strip()
-        website = (tags.get('website') or '').strip()
-        if not name or not website or not public_url(website):
+        website = _normalize_website(tags.get('website') or '')
+        if not name or not website:
             continue
         if company_name and company_name.casefold() not in name.casefold():
             continue
@@ -235,10 +249,8 @@ def _discover_via_nominatim(industry: str, city: str, region: str, company_name:
     for item in payload:
         address = item.get('address') or {}
         name = (item.get('name') or '').strip()
-        website = (item.get('extratags') or {}).get('website') or ''
+        website = _normalize_website((item.get('extratags') or {}).get('website') or '')
         if not name or not website or company_name.casefold() not in name.casefold():
-            continue
-        if not public_url(website):
             continue
         rows.append({
             'company_name': name,
