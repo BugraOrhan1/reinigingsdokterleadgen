@@ -23,4 +23,5 @@ htmlcov/
 # Runtime data / local databases
 *.sqlite3
 *.db
+data/
 postgres_data/

@@ -46,7 +46,18 @@ Een productieklare Python-applicatie die automatisch zakelijke leads vindt, kwal
 
 ---
 
-## Snel starten (lokaal)
+## Snel starten (makkelijkst)
+
+```bash
+./start.sh --demo   # start alles + voorbeelddata, inlog verschijnt in de terminal
+```
+
+Open daarna `http://127.0.0.1:8000`. Zonder Docker start het script automatisch
+met een lokale SQLite-database. Zie **STAPPENPLAN.md** voor een uitleg in gewone
+taal, inclusief hoe je echte e-mails aanzet.
+
+<details>
+<summary>Stap voor stap (alternatief)</summary>
 
 1. Installeer Python 3.11/3.12 en kopieer `.env.example` naar `.env`.
 2. Kies een lange willekeurige `APP_SECRET` en een sterk `ADMIN_PASSWORD` (`openssl rand -hex 32`).
@@ -58,11 +69,16 @@ Een productieklare Python-applicatie die automatisch zakelijke leads vindt, kwal
 
 4. Open `http://127.0.0.1:8000`, log in en maak een campagne.
 
+</details>
+
 ## Met Docker Compose
 
     cp .env.example .env        # vul POSTGRES_PASSWORD en DATABASE_URL in
     docker compose up --build -d
     # dashboard: http://127.0.0.1:8000 (migraties draaien automatisch)
+
+    # demo-data in de docker-database plaatsen:
+    docker compose exec app python scripts/seed_demo.py
 
 De Compose-poort luistert op localhost. Voor een VPS plaats je een HTTPS-reverse-proxy
 voor de app en zet je `COOKIE_SECURE=true`.
