@@ -52,7 +52,7 @@ def test_dry_run_never_calls_provider(db, sample, monkeypatch):
 def test_send_limits(db, sample, monkeypatch):
     company, campaign, contact, lead, mail = sample
     monkeypatch.setattr('app.services.mailer.settings', lambda: Settings(hourly_email_limit=0))
-    assert can_send(db, mail, lead, campaign, company, contact) == (False, 'rate_limit')
+    assert can_send(db, mail, lead, campaign, company, contact) == (False, 'rate_limit_hourly')
 
 
 def test_unsubscribe_stops_followup_and_suppresses(db, sample):

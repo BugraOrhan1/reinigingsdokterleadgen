@@ -1,0 +1,26 @@
+# Environment & secrets — never commit real credentials
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Tooling
+.idea/
+.vscode/
+.DS_Store
+
+# Runtime data / local databases
+*.sqlite3
+*.db
+postgres_data/

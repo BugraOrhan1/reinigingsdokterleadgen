@@ -11,21 +11,34 @@ services:
       test: ["CMD-SHELL", "pg_isready -U outreach -d outreach"]
       interval: 10s
       retries: 5
+    restart: unless-stopped
+
   app:
     build: .
     env_file: .env
+    environment:
+      # Force the container to reach Postgres over the compose network.
+      DATABASE_URL: postgresql+psycopg://outreach:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/outreach
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
     command: ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+    restart: unless-stopped
+
   worker:
     build: .
     env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://outreach:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/outreach
     depends_on:
       postgres:
         condition: service_healthy
-    command: ["sh", "-c", "alembic upgrade head && python -m app.workers.scheduler"]
+    # The app service owns the migrations; the worker waits for the schema
+    # (avoids a race between two concurrent `alembic upgrade head` runs).
+    command: ["sh", "-c", "python scripts/worker_entrypoint.py"]
+    restart: unless-stopped
+
 volumes:
   postgres_data:

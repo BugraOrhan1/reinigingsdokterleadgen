@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inloggen · Reinigingsdokter Outreach</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#1b2931;background:#f3f7f7}body{margin:0;display:grid;place-items:center;min-height:100vh}
+.card{background:white;border-radius:14px;padding:2rem;width:320px;box-shadow:0 2px 20px #173d4422}
+h1{font-size:1.2rem;color:#113e46;margin:0 0 .5rem}p{color:#587078;margin:0 0 1.2rem;font-size:.9rem}
+label{display:grid;gap:.3rem;margin:.8rem 0;font-size:.9rem}
+input{border:1px solid #adc4c5;border-radius:6px;padding:.65rem;font:inherit}
+button{background:#0d7274;color:white;border:0;border-radius:7px;padding:.75rem 1rem;width:100%;cursor:pointer;font:inherit;margin-top:.5rem}
+button:hover{background:#09585a}.error{color:#a42424;font-size:.85rem;margin-top:.8rem}
+</style></head><body>
+<div class="card">
+<h1>Reinigingsdokter · Outreach</h1>
+<p>Log in om het dashboard te openen.</p>
+<form id="form" action="/login" method="post">
+<label>Gebruikersnaam<input name="username" autocomplete="username" required></label>
+<label>Wachtwoord<input name="password" type="password" autocomplete="current-password" required></label>
+<button type="submit">Inloggen</button>
+</form>
+<div id="error" class="error"></div>
+</div>
+<script>
+document.querySelector('#form').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const body = new URLSearchParams(new FormData(e.target));
+  const r = await fetch('/login', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body});
+  if (r.redirected || r.ok) { location.href = '/'; return; }
+  document.querySelector('#error').textContent = r.status === 401 ? 'Ongeldige inloggegevens' : await r.text();
+});
+</script>
+</body></html>

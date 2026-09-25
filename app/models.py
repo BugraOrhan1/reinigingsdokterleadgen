@@ -80,10 +80,13 @@ class Email(Base):
     subject: Mapped[str] = mapped_column(String(255))
     body: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(30), default='draft')
+    outcome: Mapped[str] = mapped_column(String(30), default='')
+    error: Mapped[str] = mapped_column(String(200), default='')
     provider_id: Mapped[str] = mapped_column(String(255), default='')
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    failed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class EmailEvent(Base):
